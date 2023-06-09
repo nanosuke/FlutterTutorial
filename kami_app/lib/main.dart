@@ -109,7 +109,6 @@ class GeneratorPage extends StatelessWidget {
         children: [
           BigCard(pair: pair),
           SizedBox(height: 10),
-          SizedBox(height: 10),
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
