@@ -32,40 +32,103 @@ class MyAppState extends ChangeNotifier {
   // アプリの状態を定義　アプリが機能するために必要となるデータを定義
 // ChangeNotifier を拡張　つまり、自身の変更に関する通知を行うことができるということ
   var current = WordPair.random();
+
   void getNext() {
     // currentに新しいランダムなWordPairを再代入
     current = WordPair.random();
     notifyListeners(); // 監視しているMyAppStateに通知するためにnotifyListeners()を呼び出す
+  }
+
+  var favorites =
+      <WordPair>[]; // お気に入りの単語を格納するリスト ジェネリクス(<>)により、WordPairのみを格納できるようになる(WordPair以外にしようとすると実行拒否！！)
+
+  void toggleFavorite() {
+    // 気に入りのリストから現在の単語ペアを取り除くか（すでにそこにある場合）、追加する どっちも場合でもnotifyListeners()を呼び出す
+    if (favorites.contains(current)) {
+      favorites.remove(current);
+    } else {
+      favorites.add(current);
+    }
+    notifyListeners();
   }
 }
 
 class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    // build()でそのウィジェットを常に最新にするために、周囲の状況が変化するたびに自動的に呼び出される
-    var appState = context.watch<MyAppState>(); // watchメソッドでアプリの現在の状態に対する変更を追跡
+    return Scaffold(
+      body: Row(
+        children: [
+          SafeArea(
+            child: NavigationRail(
+              extended: false,
+              destinations: [
+                NavigationRailDestination(
+                  icon: Icon(Icons.home),
+                  label: Text('Home'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.favorite),
+                  label: Text('Favorites'),
+                ),
+              ],
+              selectedIndex: 0,
+              onDestinationSelected: (value) {
+                print('selected: $value');
+              },
+            ),
+          ),
+          Expanded(
+            child: Container(
+              color: Theme.of(context).colorScheme.primaryContainer,
+              child: GeneratorPage(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class GeneratorPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
     var pair = appState.current;
 
-    return Scaffold(
-      // buildメソッドはウィジェットかウィジェットのネストしたツリーを返す　今のトップレベルのウィジェットは Scaffold
-      body: Center(
-        child: Column(
-          // レイアウトウィジェット　任意の数の子を従え、それらを上から下へ一列に配置
-          mainAxisAlignment: MainAxisAlignment.center, // 子を中央に配置
-          children: [
-            BigCard(
-                pair:
-                    pair), // appstateをとり、そのクラスの唯一のメンバーであるcurrent(WordPair)にアクセス
-            // WordPair には、asPascalCase や asSnakeCase などの便利なゲッターがある
-            SizedBox(height: 10), // 間隔をあける
-            ElevatedButton(
-              onPressed: () {
-                appState.getNext();
-              },
-              child: Text('Next'),
-            ),
-          ],
-        ),
+    IconData icon;
+    if (appState.favorites.contains(pair)) {
+      icon = Icons.favorite;
+    } else {
+      icon = Icons.favorite_border;
+    }
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          BigCard(pair: pair),
+          SizedBox(height: 10),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ElevatedButton.icon(
+                onPressed: () {
+                  appState.toggleFavorite();
+                },
+                icon: Icon(icon),
+                label: Text('Like'),
+              ),
+              SizedBox(width: 10),
+              ElevatedButton(
+                onPressed: () {
+                  appState.getNext();
+                },
+                child: Text('Next'),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
