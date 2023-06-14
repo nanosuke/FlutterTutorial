@@ -73,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
         break;
       case 1:
         page =
-            Placeholder(); // Placeholder()...配置した場所に従事が入った四角形を描画 その部分のUIが未完成なことを示す便利なウィジェット
+            FavoritesPage(); // Placeholder()...配置した場所に従事が入った四角形を描画 その部分のUIが未完成なことを示す便利なウィジェット
         break;
       default:
         throw UnimplementedError(
@@ -88,7 +88,8 @@ class _MyHomePageState extends State<MyHomePage> {
             SafeArea(
               // その子がハードウェアノッチやステータスバーで隠れないようにする(NavigationRailを包み、ナビゲーションボタンが隠されるのを防いでいる)
               child: NavigationRail(
-                extended: constraints.maxWidth >= 600,
+                extended:
+                    constraints.maxWidth >= 600, // 600以上の場合、ナビゲーションバーが拡張される
                 destinations: [
                   NavigationRailDestination(
                     icon: Icon(Icons.home),
@@ -194,6 +195,41 @@ class BigCard extends StatelessWidget {
           semanticsLabel: "${pair.first} ${pair.second}",
         ),
       ),
+    );
+  }
+}
+
+class FavoritesPage extends StatelessWidget {
+  /*
+  アプリの現在の状態を取得
+  お気に入りのリストが空の場合は、中央寄せされた「No faviroites yet *.*」を表示
+  そうでないばあいはリストを表示(スクロール可能)
+  リストの最初には概要を表示(ex: You have 5 favorites*.*)
+  すべてのお気に入りについて反復処理をお行い、それぞれにListTileを構築
+  */
+  @override
+  Widget build(BuildContext context) {
+    var appState = context.watch<MyAppState>();
+
+    if (appState.favorites.isEmpty) {
+      return Center(
+        child: Text('No favorites yet.'),
+      );
+    }
+
+    return ListView(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Text('You have '
+              '${appState.favorites.length} favorites:'),
+        ),
+        for (var pair in appState.favorites)
+          ListTile(
+            leading: Icon(Icons.favorite),
+            title: Text(pair.asLowerCase),
+          ),
+      ],
     );
   }
 }
