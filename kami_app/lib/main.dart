@@ -53,40 +53,72 @@ class MyAppState extends ChangeNotifier {
   }
 }
 
-class MyHomePage extends StatelessWidget {
+class MyHomePage extends StatefulWidget {
+  @override
+  State<MyHomePage> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends State<MyHomePage> {
+  // Stateクラスを継承しているため、自身の値を管理できる
+// 銭湯が_なのでクラスが非公開になる
+
+  var selectedIndex = 0; // 0に初期化
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          SafeArea(
-            child: NavigationRail(
-              extended: false,
-              destinations: [
-                NavigationRailDestination(
-                  icon: Icon(Icons.home),
-                  label: Text('Home'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.favorite),
-                  label: Text('Favorites'),
-                ),
-              ],
-              selectedIndex: 0,
-              onDestinationSelected: (value) {
-                print('selected: $value');
-              },
+    Widget page;
+    switch (selectedIndex) {
+      // selectedIndexの現在の値に基づいて、画面をpageに代入
+      case 0:
+        page = GeneratorPage();
+        break;
+      case 1:
+        page =
+            Placeholder(); // Placeholder()...配置した場所に従事が入った四角形を描画 その部分のUIが未完成なことを示す便利なウィジェット
+        break;
+      default:
+        throw UnimplementedError(
+            'no widget for $selectedIndex'); // ファイルファストの法則 selectedIndexが0でも1でもないとき、エラーをスロー
+    }
+
+    return LayoutBuilder(builder: (context, constraints) {
+      // builderコールバックは、制約が変化するたびに呼び出される(アプリのウィンドウサイズを変更した、スマホの向きを変えた、MyHomePage横のウィジェットサイズが大きくなり、MyHomePageの制約が小さくなった)
+      return Scaffold(
+        body: Row(
+          children: [
+            SafeArea(
+              // その子がハードウェアノッチやステータスバーで隠れないようにする(NavigationRailを包み、ナビゲーションボタンが隠されるのを防いでいる)
+              child: NavigationRail(
+                extended: constraints.maxWidth >= 600,
+                destinations: [
+                  NavigationRailDestination(
+                    icon: Icon(Icons.home),
+                    label: Text('Home'),
+                  ),
+                  NavigationRailDestination(
+                    icon: Icon(Icons.favorite),
+                    label: Text('Favorites'),
+                  ),
+                ],
+                selectedIndex:
+                    selectedIndex, //　０が選択されると最初のデスティネーションが選択され、１が選択されると２番目のデスティネーションが選択される
+                onDestinationSelected: (value) {
+                  setState(() {
+                    selectedIndex = value;
+                  });
+                },
+              ),
             ),
-          ),
-          Expanded(
-            child: Container(
-              color: Theme.of(context).colorScheme.primaryContainer,
-              child: GeneratorPage(),
+            Expanded(
+              // ある子は必要なだけのスペースをできる限り埋め、別のウィジェットは残りのスペースをできる限り埋める
+              child: Container(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                child: page,
+              ),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    });
   }
 }
 
@@ -114,7 +146,7 @@ class GeneratorPage extends StatelessWidget {
             children: [
               ElevatedButton.icon(
                 onPressed: () {
-                  appState.toggleFavorite(); // お気に入りの単語を切り替える
+                  appState.toggleFavorite(); // お気に入りの単語を切り替えるs
                 },
                 icon: Icon(icon),
                 label: Text('Like'),
