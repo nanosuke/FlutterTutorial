@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           ),
           home: MyHomePage(),
-          debugShowCheckedModeBanner: false),
+          debugShowCheckedModeBanner: false), // debugの旗を消す
     );
   }
 }
@@ -32,9 +32,17 @@ class MyAppState extends ChangeNotifier {
   // アプリの状態を定義　アプリが機能するために必要となるデータを定義
 // ChangeNotifier を拡張　つまり、自身の変更に関する通知を行うことができるということ
   var current = WordPair.random();
+  var history = <WordPair>[]; // WordPairの履歴を格納するリスト
+
+  GlobalKey? historyListKey; // 履歴リストのキーを格納する変数
+  // ?マークでnull許容型にしている
+  // GlobalKeyは、任意の画面(ページ)やWidgetツリーの全く別の階層から特定のWidgetにアクセスするために利用
 
   void getNext() {
     // currentに新しいランダムなWordPairを再代入
+    history.insert(0, current); // 履歴リストに現在の単語ペアを追加
+    var animatedList = historyListKey?.currentState as AnimatedListState?;
+    animatedList?.insertItem(0); // 履歴リストの先頭にアニメーション付きで現在の単語ペアを追加
     current = WordPair.random();
     notifyListeners(); // 監視しているMyAppStateに通知するためにnotifyListeners()を呼び出す
   }
@@ -42,13 +50,22 @@ class MyAppState extends ChangeNotifier {
   var favorites =
       <WordPair>[]; // お気に入りの単語を格納するリスト ジェネリクス(<>)により、WordPairのみを格納できるようになる(WordPair以外にしようとすると実行拒否！！)
 
-  void toggleFavorite() {
+///////////////////////////よくわからない
+  void toggleFavorite([WordPair? pair]) {
     // 気に入りのリストから現在の単語ペアを取り除くか（すでにそこにある場合）、追加する どっちも場合でもnotifyListeners()を呼び出す
-    if (favorites.contains(current)) {
-      favorites.remove(current);
+    pair = pair ?? current; // pairがnullの場合、currentを代入
+    if (favorites.contains(pair)) {
+      favorites.remove(pair);
     } else {
-      favorites.add(current);
+      favorites.add(pair);
     }
+    notifyListeners();
+  }
+
+///////////////////////////よくわからない
+  void removeFavorite(WordPair pair) {
+    // お気に入りのリストから単語ペアを削除
+    favorites.remove(pair);
     notifyListeners();
   }
 }
@@ -65,6 +82,8 @@ class _MyHomePageState extends State<MyHomePage> {
   var selectedIndex = 0; // 0に初期化
   @override
   Widget build(BuildContext context) {
+    var colorScheme = Theme.of(context).colorScheme;
+
     Widget page;
     switch (selectedIndex) {
       // selectedIndexの現在の値に基づいて、画面をpageに代入
@@ -79,6 +98,15 @@ class _MyHomePageState extends State<MyHomePage> {
         throw UnimplementedError(
             'no widget for $selectedIndex'); // ファイルファストの法則 selectedIndexが0でも1でもないとき、エラーをスロー
     }
+/*
+    var mainArea = ColoredBox(
+      child: AnimatedSwitcher(
+        // 画面の切り替え時にアニメーションを実行
+        duration: const Duration(milliseconds: 200),
+        child: page,
+      ),
+    );
+    */
 
     return LayoutBuilder(builder: (context, constraints) {
       // builderコールバックは、制約が変化するたびに呼び出される(アプリのウィンドウサイズを変更した、スマホの向きを変えた、MyHomePage横のウィジェットサイズが大きくなり、MyHomePageの制約が小さくなった)
@@ -209,7 +237,7 @@ class FavoritesPage extends StatelessWidget {
   */
   @override
   Widget build(BuildContext context) {
-    var appState = context.watch<MyAppState>();
+    var appState = context.watch<MyAppState>(); // アプリの現在の状態を取得
 
     if (appState.favorites.isEmpty) {
       return Center(
